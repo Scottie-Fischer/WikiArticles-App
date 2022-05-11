@@ -8,7 +8,7 @@ soup = BeautifulSoup(page.content,'html.parser')
 textTopic = "Topic:"
 textBody = ""
 Topic = tk.Message(main,aspect = 900,text = textTopic, justify = tk.CENTER)
-Body = tk.Enrty(main,anchor = tk.NW,state = 'readonly', height = 50,width = 200,bg = '#00ffff',text = textBody, wraplength = 1600,justify = tk.LEFT)
+Body = tk.Label(main,anchor = tk.NW, height = 50, width = 200,bg = '#00ffff',text = textBody, wraplength = 1600,justify = tk.LEFT)
 #=========================================#
 
 def getNewSource():
