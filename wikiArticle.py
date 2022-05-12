@@ -8,6 +8,8 @@ page = requests.get("https://en.wikipedia.org/wiki/Special:Random")
 soup = BeautifulSoup(page.content,'html.parser')
 topic_text = "Topic:"
 body_text = ""
+rand_url = "https://en.wikipedia.org/wiki/Special:Random"
+search_url = rand_url
 #==============Frame Setup================#
 root = Tk(className = 'wikiNews', useTk = 1)
 root.geometry('1280x720')
@@ -61,8 +63,8 @@ topic_message.grid(row = 0, column = 0, sticky='nsew')
 search_entry = Entry(search_frame,textvariable = search_str)
 search_entry.grid(row = 0, column = 0, columnspan = 2, sticky = 'nsew')
 
-search_but = Button(search_frame, text = "Search", command = lambda: print(search_str.get()))
-search_but.grid(row = 0, column = 2, sticky = 'nsew')
+search_button = Button(search_frame, text = "Search", command = lambda: print(search_str.get()))
+search_button.grid(row = 0, column = 2, sticky = 'nsew')
 
 body_label = Text(body_frame,padx = 25, wrap = WORD)
 body_label.grid(row = 0, column = 0, sticky = 'nsew')
@@ -71,35 +73,76 @@ refresh_button = Button(refresh_frame, text = 'refresh')
 refresh_button.grid(row = 0, column = 0, sticky = 'nsew')
 #=========================================================================#
 
-#==============Global Vars================#
-#ScrollBar = tk.Scrollbar(main, orient = 'vertical', command = Body.yview)
-#Body.config(yscrollcommand = ScrollBar.set)
-
-#=========================================================================#
-
 #=============Helper Funcs================#
+def getRandSource():
+    global search_url
+    global rand_url
+
+    search_url = rand_url
+    getNewSource()
+
 def getNewSource():
     global page
     global soup
-    global textTopic
-    page = requests.get("https://en.wikipedia.org/wiki/Special:Random")
+    global topic_text
+    global search_url
+    global rand_url
+
+    error_str = "Other reasons this message may be displayed"
+
+    #Check if the url is empty
+    if(search_url == ""):
+        search_url = rand_url
+    
+    #Use bs4 to scrape wikipedia
+    page = requests.get(search_url) 
     soup = BeautifulSoup(page.content,'html.parser')
     topic_text = "TOPIC: " + soup.title.string
     topic_text = topic_text[0:topic_text.find("- Wikipedia")]
     topic_message.config(text = topic_text)
-    print(topic_text)
     body_text = ""
+
+    #Increment over paragraphs to grab text data
     for data in soup.find_all('p'):
         body_text += data.getText() + "\n"
+    
+    body_label.delete('@0,0',END)
 
-    body_label.delete('@0,0',CURRENT)  #delete previous entry
-    body_label.insert('@0,0',body_text)    #print new entry
+    #Check if the article actually exists
+    if error_str in body_text:
+        body_label.insert('@0,0',"Error: No Article for Search\nPlease Try Something Else")
+    else:
+        body_label.insert('@0,0',body_text)    #print new entry
 
+def newSearch():
+    global page
+    global soup
+    global topic_text
+    global search_url
+    
+    #Get Search String from Entry
+    search_text = search_entry.get()
+    #Change it to fit format wikipedia wants
+    search_text = search_text.replace(" ","_")
+    #Iterate Over URL to change lower case to uppercase
+    counter = 0
+    search_url = ""
+    while counter <  len(search_text):
+        if(search_text[counter] == "_"):
+            search_url += "_" + search_text[counter+1].upper()
+            counter +=2
+        else:
+            search_url += search_text[counter]
+            counter+=1
+    
+    search_url = "https://en.wikipedia.org/wiki/" + search_url
+    #Call Func to scrape wikipedia
+    getNewSource()
 
-
-#========================================================================#
 
 #Update Refresh Button to have getNewSource() func as command
-refresh_button.configure(command = getNewSource)
+refresh_button.configure(command = getRandSource)
+#Update Search Button to have newSearch() func as command
+search_button.configure(command = newSearch)
 
 root.mainloop()
