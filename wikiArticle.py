@@ -103,8 +103,14 @@ def getNewSource():
     body_text = ""
 
     #Increment over paragraphs to grab text data
-    for data in soup.find_all('p'):
-        body_text += data.getText() + "\n"
+    
+    for data in soup.find_all(['h2','p']):
+        if data.getText() != "Contents":
+
+            if data.contents[0].name == 'span':
+                body_text += "----" + data.getText().upper() + "----\n\n"
+            else:
+                body_text += data.getText() + "\n"
     
     body_label.delete('@0,0',END)
 
